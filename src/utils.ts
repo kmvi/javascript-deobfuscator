@@ -39,3 +39,27 @@ export function isLiteral(node: estree.Node): node is estree.Literal {
     return node.type === 'Literal';
 }
 
+export function isVariableDeclaration(node: estree.Node): node is estree.VariableDeclaration {
+    return node.type === 'VariableDeclaration';
+}
+
+export function isIdentifier(node: estree.Node): node is estree.Identifier {
+    return node.type === 'Identifier';
+}
+
+export function isFunctionExpression(node: estree.Node): node is estree.FunctionExpression {
+    return node.type === 'FunctionExpression';
+}
+
+export function isCallExpression(node: estree.Node): node is estree.CallExpression {
+    return node.type === 'CallExpression';
+}
+
+export function isExpressionStatement(node: estree.Node): node is estree.ExpressionStatement {
+    return node.type === 'ExpressionStatement';
+}
+
+export function isArrayExpression(node: estree.Node): node is estree.ArrayExpression {
+    return node.type === 'ArrayExpression';
+}
+

@@ -3,7 +3,7 @@ import * as estree from 'estree';
 import { assert } from 'console';
 import { VisitorOption, traverse, replace } from 'estraverse';
 import { ProtectionBase } from "./protection";
-import { cutCode, decodeBase64, decodeRC4, isVariableDeclaration, isIdentifier, isFunctionExpression, isLiteral, isCallExpression, isExpressionStatement, isArrayExpression } from './utils';
+import * as Utils from './utils';
 
 type EncodingType = 'none' | 'base64' | 'rc4';
 
@@ -29,15 +29,15 @@ export class StringArrayProtection extends ProtectionBase {
     
     detect(): boolean {
         this.active = false;
-        if (this.ast.body && this.ast.body.length > 0 && isVariableDeclaration(this.ast.body[0])) {
+        if (this.ast.body && this.ast.body.length > 0 && Utils.isVariableDeclaration(this.ast.body[0])) {
             const strArrayDef = <estree.VariableDeclaration> this.ast.body[0];
             if (strArrayDef.declarations && strArrayDef.declarations.length > 0) {
                 const strArrayDecl = strArrayDef.declarations[0];
-                if (strArrayDecl.init && isArrayExpression(strArrayDecl.init) && isIdentifier(strArrayDecl.id)) {
+                if (strArrayDecl.init && Utils.isArrayExpression(strArrayDecl.init) && Utils.isIdentifier(strArrayDecl.id)) {
                     this.arrayVar = strArrayDecl.id.name;
                     this.astArray = this.ast.body[0] as estree.Statement;
                     this.array = strArrayDecl.init.elements.map(e => {
-                        assert(isLiteral(e));
+                        assert(Utils.isLiteral(e));
                         assert(typeof (<estree.Literal> e).value === 'string');
                         return (<estree.Literal> e).value as string;
                     });                    
@@ -52,15 +52,15 @@ export class StringArrayProtection extends ProtectionBase {
 
     private detectRotation(): boolean {
         this.hasRotation = false;
-        if (this.ast.body.length > 1 && isExpressionStatement(this.ast.body[1])) {
+        if (this.ast.body.length > 1 && Utils.isExpressionStatement(this.ast.body[1])) {
             const expr = <estree.ExpressionStatement> this.ast.body[1];
-            if (isCallExpression(expr.expression)) {
+            if (Utils.isCallExpression(expr.expression)) {
                 if (expr.expression.arguments.length === 2) {
-                    const id = <estree.Identifier> expr.expression.arguments.find(isIdentifier);
-                    const cnt = <estree.Literal> expr.expression.arguments.find(isLiteral);
+                    const id = <estree.Identifier> expr.expression.arguments.find(Utils.isIdentifier);
+                    const cnt = <estree.Literal> expr.expression.arguments.find(Utils.isLiteral);
                     if (id && id.name === this.arrayVar && cnt && typeof cnt.value === 'number') {
                         this.hasRotation = true;
-                        this.rotFunc = cutCode(this.code, expr);
+                        this.rotFunc = Utils.cutCode(this.code, expr);
                         this.astRot = this.ast.body[1] as estree.Statement;
                     }
                 }
@@ -72,13 +72,13 @@ export class StringArrayProtection extends ProtectionBase {
     private detectEncoding(): boolean {
         this.hasEncoding = false;
         let index = this.hasRotation ? 2 : 1;
-        if (this.ast.body.length > index && isVariableDeclaration(this.ast.body[index])) {
+        if (this.ast.body.length > index && Utils.isVariableDeclaration(this.ast.body[index])) {
             const decVar = <estree.VariableDeclaration> this.ast.body[index];
             if (decVar.declarations && decVar.declarations.length > 0) {
                 const decDecl = <estree.VariableDeclarator> decVar.declarations[0];
-                if (isIdentifier(decDecl.id) && decDecl.init && isFunctionExpression(decDecl.init)) {
+                if (Utils.isIdentifier(decDecl.id) && decDecl.init && Utils.isFunctionExpression(decDecl.init)) {
                     if (decDecl.init.params.length === 2) {
-                        const decFuncCode = cutCode(this.code, decDecl.init);
+                        const decFuncCode = Utils.cutCode(this.code, decDecl.init);
                         this.encoding = /\batob\b/.test(decFuncCode)
                             ? (/%(?:0x100|256)\D/.test(decFuncCode) ? 'rc4' : 'base64')
                             : 'none';
@@ -105,11 +105,11 @@ export class StringArrayProtection extends ProtectionBase {
         if (this.hasEncoding && this.astDecoder) {
             if (this.encoding === 'base64') {
                 for (let i = 0; i < this.array.length; ++i)
-                    this.array[i] = decodeBase64(this.array[i]);
+                    this.array[i] = Utils.decodeBase64(this.array[i]);
             } else if (this.encoding === 'rc4') {
                 this.fillKeys();
                 for (let i = 0; i < this.array.length; ++i)
-                    this.array[i] = decodeRC4(this.array[i], this.rc4Keys[i]);
+                    this.array[i] = Utils.decodeRC4(this.array[i], this.rc4Keys[i]);
             }
             this.removeDecoderCalls();
         }
@@ -161,10 +161,10 @@ export class StringArrayProtection extends ProtectionBase {
     }
 
     private checkDecoderCall(node: estree.Node): estree.CallExpression | null {
-        if (isCallExpression(node) && isIdentifier(node.callee)) {
+        if (Utils.isCallExpression(node) && Utils.isIdentifier(node.callee)) {
             if (node.callee.name === this.decFuncName) {
                 assert(node.arguments.length === 2);
-                assert(node.arguments.every(isLiteral));
+                assert(node.arguments.every(Utils.isLiteral));
                 return node;
             }
         }

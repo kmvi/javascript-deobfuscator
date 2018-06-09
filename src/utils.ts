@@ -8,12 +8,61 @@ export function cutCode(code: string, node: estree.BaseNodeWithoutComments): str
 }
 
 export function registerDecoders(): void {
-    (function (g: any) {
-        var j='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-        g.atob || (g.atob = function(k:any){var l=String(k)['replace'](/=+$/,'');for(var m=0x0,n=0,o,p=0x0,q='';o=l['charAt'](p++);~o&&(n=m%0x4?n*0x40+o:o,m++%0x4)?q+=String['fromCharCode'](0xff&n>>(-0x2*m&0x6)):0x0){o=j['indexOf'](o);}return q;});
+    (function (that: any) {
+        var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+        that.atob || (
+            that.atob = function(input: any) {
+                var str = String(input).replace(/=+$/, '');
+                for (
+                    var bc = 0, bs = 0, buffer, idx = 0, output = '';
+                    buffer = str.charAt(idx++);
+                    ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer,
+                        bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0
+                ) {
+                    buffer = chars.indexOf(buffer);
+                }
+            return output;
+        });
     })(global);
-    (function (g: any) {
-        g.rc4 || (g.rc4 = function(s:any,t:any){var u=[],v=0x0,w,x='',y='';s=g.atob(s);for(var z=0x0,A=s['length'];z<A;z++){y+='%'+('00'+s['charCodeAt'](z)['toString'](0x10))['slice'](-0x2);}s=decodeURIComponent(y);for(var B=0x0;B<0x100;B++){u[B]=B;}for(B=0x0;B<0x100;B++){v=(v+u[B]+t['charCodeAt'](B%t['length']))%0x100;w=u[B];u[B]=u[v];u[v]=w;}B=0x0;v=0x0;for(var C=0x0;C<s['length'];C++){B=(B+0x1)%0x100;v=(v+u[B])%0x100;w=u[B];u[B]=u[v];u[v]=w;x+=String['fromCharCode'](s['charCodeAt'](C)^u[(u[B]+u[v])%0x100]);}return x;});
+
+    (function (that: any) {
+        that.rc4 || (
+            that.rc4 = function (str: any, key: any) {
+                var s = [], j = 0, x, res = '', newStr = '';
+               
+                str = that.atob(str);
+                    
+                for (var k = 0, length = str.length; k < length; k++) {
+                    newStr += '%' + ('00' + str.charCodeAt(k).toString(16)).slice(-2);
+                }
+            
+                str = decodeURIComponent(newStr);
+                                    
+                for (var i = 0; i < 256; i++) {
+                    s[i] = i;
+                }
+     
+                for (i = 0; i < 256; i++) {
+                    j = (j + s[i] + key.charCodeAt(i % key.length)) % 256;
+                    x = s[i];
+                    s[i] = s[j];
+                    s[j] = x;
+                }
+                
+                i = 0;
+                j = 0;
+                
+                for (var y = 0; y < str.length; y++) {
+                    i = (i + 1) % 256;
+                    j = (j + s[i]) % 256;
+                    x = s[i];
+                    s[i] = s[j];
+                    s[j] = x;
+                    res += String.fromCharCode(str.charCodeAt(y) ^ s[(s[i] + s[j]) % 256]);
+                }
+                          
+                return res;
+        });
     })(global);
 }
 

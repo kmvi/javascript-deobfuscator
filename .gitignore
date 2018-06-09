@@ -72,4 +72,4 @@ typings/
 !.vscode/launch.json
 !.vscode/extensions.json
 
-out/*
+*.js

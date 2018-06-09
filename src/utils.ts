@@ -29,29 +29,29 @@ export function registerDecoders(): void {
         that.rc4 || (
             that.rc4 = function (str: any, key: any) {
                 var s = [], j = 0, x, res = '', newStr = '';
-               
+
                 str = that.atob(str);
-                    
+
                 for (var k = 0, length = str.length; k < length; k++) {
                     newStr += '%' + ('00' + str.charCodeAt(k).toString(16)).slice(-2);
                 }
-            
+
                 str = decodeURIComponent(newStr);
-                                    
+
                 for (var i = 0; i < 256; i++) {
                     s[i] = i;
                 }
-     
+
                 for (i = 0; i < 256; i++) {
                     j = (j + s[i] + key.charCodeAt(i % key.length)) % 256;
                     x = s[i];
                     s[i] = s[j];
                     s[j] = x;
                 }
-                
+
                 i = 0;
                 j = 0;
-                
+
                 for (var y = 0; y < str.length; y++) {
                     i = (i + 1) % 256;
                     j = (j + s[i]) % 256;
@@ -60,7 +60,7 @@ export function registerDecoders(): void {
                     s[j] = x;
                     res += String.fromCharCode(str.charCodeAt(y) ^ s[(s[i] + s[j]) % 256]);
                 }
-                          
+
                 return res;
         });
     })(global);
@@ -112,3 +112,6 @@ export function isArrayExpression(node: estree.Node): node is estree.ArrayExpres
     return node.type === 'ArrayExpression';
 }
 
+export function isUnaryExpression(node: estree.Node): node is estree.UnaryExpression {
+    return node.type === 'UnaryExpression';
+}

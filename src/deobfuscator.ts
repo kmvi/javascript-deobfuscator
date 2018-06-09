@@ -2,11 +2,10 @@ import * as espree from 'espree';
 import * as estree from 'estree';
 import { generate } from 'escodegen';
 import { EspreeFacade } from './EspreeFacade';
-import { VariableDeclaration } from 'estree';
 import { StringArrayProtection } from './string-array';
 import { registerDecoders } from './utils';
 import { ProtectionBase } from './protection';
-import { StringSplit } from './string-split';
+import { StringSplit, BooleanLiterals } from './literals';
 
 type ProtectionCtor = new (code: string, ast: estree.Program) => ProtectionBase;
 
@@ -26,11 +25,12 @@ export class Deobfuscator {
     private ast: estree.Program | null = null;
     private protections: ProtectionCtor[] = [
         StringSplit,
+        BooleanLiterals,
         StringArrayProtection,
     ];
 
     constructor (public code: string) {
-        
+
     }
 
     init(): void {
@@ -52,7 +52,7 @@ export class Deobfuscator {
                 code = generate(ast);
             }
         }
-        
+
         return code;
     }
 

@@ -30,3 +30,12 @@ export function decodeRC4(encoded: string, key: string): string {
         throw new Error('Call registerDecoders() first.');
     return g.rc4(encoded, key);
 }
+
+export function isBinaryExpression(node: estree.Node): node is estree.BinaryExpression {
+    return node.type === 'BinaryExpression';
+}
+
+export function isLiteral(node: estree.Node): node is estree.Literal {
+    return node.type === 'Literal';
+}
+

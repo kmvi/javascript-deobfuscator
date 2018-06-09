@@ -12,7 +12,6 @@ export class StringArrayProtection extends ProtectionBase {
     private arrayVar: string = '';
     private array: string[] = [];
     private astArray: estree.Statement | null = null;
-    private active: boolean = false;    
 
     private hasRotation: boolean = false;
     private rotFunc: string = '';
@@ -93,10 +92,6 @@ export class StringArrayProtection extends ProtectionBase {
             }
         }
         return this.hasEncoding;
-    }
-
-    isActive() {
-        return this.active;
     }
 
     remove(): estree.Program {

@@ -13,7 +13,7 @@
                 "${workspaceFolder}/**/*.js"
             ],
             "args": [
-                "${workspaceFolder}/test-data/test-obf3.js"
+                "${workspaceFolder}/test-data/test-obf6.js"
             ]
         }
     ]

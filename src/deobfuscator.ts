@@ -5,6 +5,10 @@ import { EspreeFacade } from './EspreeFacade';
 import { VariableDeclaration } from 'estree';
 import { StringArrayProtection } from './string-array';
 import { registerDecoders } from './utils';
+import { ProtectionBase } from './protection';
+import { StringSplit } from './string-split';
+
+type ProtectionCtor = new (code: string, ast: estree.Program) => ProtectionBase;
 
 export class Deobfuscator {
 
@@ -20,6 +24,10 @@ export class Deobfuscator {
     };
 
     private ast: estree.Program | null = null;
+    private protections: ProtectionCtor[] = [
+        StringSplit,
+        StringArrayProtection,
+    ];
 
     constructor (public code: string) {
         
@@ -37,13 +45,15 @@ export class Deobfuscator {
         let code = this.code;
         let ast = this.ast;
 
-        let p = new StringArrayProtection(code, ast);
-        p.detect();
-        p.remove();
-
-        let result = generate(this.ast);
+        for (const ctor of this.protections) {
+            const p = new ctor(code, ast);
+            if (p.detect()) {
+                ast = p.remove();
+                code = generate(ast);
+            }
+        }
         
-        return result;
+        return code;
     }
 
 }

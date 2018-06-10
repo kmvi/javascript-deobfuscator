@@ -152,3 +152,10 @@ export function isObjectExpression(node: estree.Node): node is estree.ObjectExpr
     return node.type === 'ObjectExpression';
 }
 
+export function isArrowFunctionExpression(node: estree.Node): node is estree.ArrowFunctionExpression {
+    return node.type === 'ArrowFunctionExpression';
+}
+
+export function isFunctionDeclaration(node: estree.Node): node is estree.FunctionDeclaration {
+    return node.type === 'FunctionDeclaration';
+}

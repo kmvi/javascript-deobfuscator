@@ -12,15 +12,22 @@ type SwitchInfo = {
     discrArray: string[];
     sw: estree.SwitchStatement;
     parent: estree.BlockStatement;
-}
+};
 
-export class Switch extends ProtectionBase {
+type Replace = {
+    [key: string]: estree.Expression;
+};
+
+type ObjReplace = {
+    [varname: string]: Replace;
+};
+
+export class BlockControlFlow extends ProtectionBase {
 
     private loops: SwitchInfo[] = [];
 
     constructor(code: string, ast: estree.Program) {
         super(code, ast);
-        this.active = true;
     }
 
     detect(): boolean {
@@ -178,5 +185,170 @@ export class Switch extends ProtectionBase {
         }
 
         return this.ast;
+    }
+}
+
+export class FunctionControlFlow extends ProtectionBase {
+
+    private data: ObjReplace = {};
+    private decl: { [key: string]: estree.VariableDeclaration } = {};
+
+    constructor(code: string, ast: estree.Program) {
+        super(code, ast);
+    }
+
+    detect(): boolean {
+        this.active = false;
+        traverse(this.ast, {
+            enter: (node, parent) => {
+                const isString = function (x: estree.Node): boolean {
+                    return Utils.isLiteral(x) && typeof x.value === 'string';
+                };
+                const checkProperty = function (x: estree.Node): boolean {
+                    return Utils.isLiteral(x)
+                        || (Utils.isFunctionExpression(x) && x.body.body.length === 1)
+                        || (Utils.isMemberExpression(x) && Utils.isLiteral(x.property));
+                };
+                if ((Utils.isFunctionExpression(node)
+                    || Utils.isArrowFunctionExpression(node)
+                    || Utils.isFunctionDeclaration(node))
+                    && Utils.isBlockStatement(node.body) && node.body.body.length > 0)
+                {
+                    const firstStmt = node.body.body[0];
+                    if (Utils.isVariableDeclaration(firstStmt)) {
+                        const id = firstStmt.declarations[0].id;
+                        const obj = firstStmt.declarations[0].init;
+                        if (Utils.isIdentifier(id) && obj
+                            && Utils.isObjectExpression(obj)
+                            && obj.properties.length > 0
+                            && obj.properties.every(x => isString(x.key))
+                            && obj.properties.every(x => checkProperty(x.value)))
+                        {
+                            const result = this.processProperties(obj.properties);
+                            if (Object.keys(result).length > 0) {
+                                this.data[id.name] = result;
+                                this.decl[id.name] = firstStmt;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        this.active = Object.keys(this.data).length > 0;
+        return this.active;
+    }
+
+    private processProperties (props: estree.Property[]): Replace {
+        let result: Replace = {};
+        for (const p of props) {
+            const key = (<estree.Literal> p.key).value as string;
+            if (Utils.isLiteral(p.value) || Utils.isMemberExpression(p.value)) {
+                result[key] = p.value;
+            } else if (Utils.isFunctionExpression(p.value)) {
+                const ret = p.value.body.body[0] as estree.ReturnStatement;
+                assert(Utils.isReturnStatement(ret));
+                assert(ret.argument);
+                result[key] = p.value;
+            } else {
+                throw new Error('Unexpected expression: ' +
+                    Utils.cutCode(this.code, p.value));
+            }
+        }
+        return result;
+    };
+
+    remove(): estree.Program {
+        if (!this.active)
+            return this.ast;
+
+        for (const $var in this.data) {
+            if (this.data.hasOwnProperty($var)) {
+                this.removeMemeberExpr($var);
+                this.replaceValue($var);
+            }
+        }
+
+        for (const $var in this.decl) {
+            if (this.decl.hasOwnProperty($var)) {
+                replace(this.ast, {
+                    enter: (node, parent) => {
+                        if (node === this.decl[$var]) {
+                            return VisitorOption.Remove;
+                        }
+                    }
+                });
+            }
+        }
+
+        return this.ast;
+    }
+
+    private removeMemeberExpr(key: string): void {
+        const obj = this.data[key];
+        let hasMemberExpr = true;
+        while (hasMemberExpr) {
+            hasMemberExpr = false;
+            for (let key in obj) {
+                if (obj.hasOwnProperty(key) && Utils.isMemberExpression(obj[key])) {
+                    hasMemberExpr = true;
+                    const m = obj[key] as estree.MemberExpression;
+                    const name = (m.object as estree.Identifier).name;
+                    const prop = (m.property as estree.Literal).value as string;
+                    obj[key] = this.data[name][prop];
+                }
+            }
+        }
+    }
+
+    private replaceValue(name: string): void {
+        replace(this.ast, {
+            enter: (node, parent) => {
+                if (Utils.isCallExpression(node)) {
+                    if (!Utils.isMemberExpression(node.callee)
+                        || !Utils.isIdentifier(node.callee.object)
+                        || !Utils.isLiteral(node.callee.property)
+                        || typeof node.callee.property.value !== 'string')
+                    {
+                        return undefined;
+                    }
+                    if (node.callee.object.name === name) {
+                        const f = this.data[name][node.callee.property.value] as estree.FunctionExpression;
+                        return this.substParameters(f, node.arguments as estree.Expression[]);
+                    }
+                } else if (Utils.isMemberExpression(node)) {
+                    if (!Utils.isIdentifier(node.object)
+                        || !Utils.isLiteral(node.property)
+                        || typeof node.property.value !== 'string')
+                    {
+                        return undefined;
+                    }
+                    if (node.object.name === name) {
+                        const l = this.data[name][node.property.value] as estree.Literal;
+                        assert(l);
+                        assert(l.type === 'Literal');
+                        return <estree.Literal> {
+                            type: 'Literal',
+                            value: l.value,
+                        };
+                    }
+                }
+            }
+        });
+    }
+
+    private substParameters(func: estree.FunctionExpression, args: estree.Expression[]): estree.Expression {
+        let expr = (func.body.body[0] as estree.ReturnStatement).argument!;
+        expr = JSON.parse(JSON.stringify(expr));
+        for (let i = 0; i < args.length; ++i) {
+            const param = func.params[i] as estree.Identifier;
+            replace(expr, {
+                enter: (node, parent) => {
+                    if (Utils.isIdentifier(node) && node.name === param.name) {
+                        return JSON.parse(JSON.stringify(args[i]));
+                    }
+                }
+            });
+        }
+        return expr;
     }
 }

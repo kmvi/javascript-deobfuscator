@@ -7,6 +7,7 @@ import { registerDecoders } from './utils';
 import { ProtectionBase } from './protection';
 import { StringSplit, BooleanLiterals } from './literals';
 import { BlockControlFlow, FunctionControlFlow } from './control-flow';
+import { MemberExpr } from './member-expr';
 
 type ProtectionCtor = new (code: string, ast: estree.Program) => ProtectionBase;
 
@@ -30,6 +31,7 @@ export class Deobfuscator {
         StringArrayProtection,
         BlockControlFlow,
         FunctionControlFlow,
+        MemberExpr,
     ];
 
     constructor (public code: string) {

@@ -39,6 +39,7 @@ export class Deobfuscator {
     }
 
     init(): void {
+        console.log('Parsing file...');
         this.ast = EspreeFacade.parse(this.code, Deobfuscator.espreeParseOptions);
         registerDecoders();
     }
@@ -46,6 +47,8 @@ export class Deobfuscator {
     deobfuscate(): string {
         if (!this.ast)
             throw new Error('Call init() first.');
+
+        console.log('Removing protections...');
 
         let code = this.code;
         let ast = this.ast;
@@ -58,6 +61,8 @@ export class Deobfuscator {
                 ast = EspreeFacade.parse(code, Deobfuscator.espreeParseOptions);
             }
         }
+
+        console.log('Done.');
 
         return code;
     }

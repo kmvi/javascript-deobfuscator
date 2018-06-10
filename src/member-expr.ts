@@ -19,6 +19,7 @@ export class MemberExpr extends ProtectionBase {
         if (!this.active)
             return this.ast;
 
+        process.stdout.write('* Removing computed member expressions...');
         replace(this.ast, {
             enter: (node, parent) => {
                 if (!Utils.isMemberExpression(node) || !node.computed)
@@ -36,6 +37,7 @@ export class MemberExpr extends ProtectionBase {
                 }
             }
         });
+        process.stdout.write(' done.\n');
 
         return this.ast;
     }

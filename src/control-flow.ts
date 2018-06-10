@@ -34,6 +34,8 @@ export class BlockControlFlow extends ProtectionBase {
         this.active = false;
         this.loops = this.findLoops();
         this.active = this.loops.length > 0;
+        if (this.active)
+            console.log('! Block control flow flattening detected.');
         return this.active;
     }
 
@@ -155,6 +157,7 @@ export class BlockControlFlow extends ProtectionBase {
         if (!this.active)
             return this.ast;
 
+        process.stdout.write('* Removing switch statements...');
         this.loops.forEach(x => this.fillDiscriminators(x));
         for (const loop of this.loops) {
             replace(this.ast, {
@@ -183,6 +186,7 @@ export class BlockControlFlow extends ProtectionBase {
                 }
             });
         }
+        process.stdout.write(' done.\n');
 
         return this.ast;
     }
@@ -238,6 +242,8 @@ export class FunctionControlFlow extends ProtectionBase {
             }
         });
         this.active = Object.keys(this.data).length > 0;
+        if (this.active)
+            console.log('! Function control flow flattening detected.');
         return this.active;
     }
 
@@ -264,6 +270,7 @@ export class FunctionControlFlow extends ProtectionBase {
         if (!this.active)
             return this.ast;
 
+        process.stdout.write('* Remove control flow flattening...');
         for (const $var in this.data) {
             if (this.data.hasOwnProperty($var)) {
                 this.removeMemeberExpr($var);
@@ -282,6 +289,7 @@ export class FunctionControlFlow extends ProtectionBase {
                 });
             }
         }
+        process.stdout.write(' done.\n');
 
         return this.ast;
     }

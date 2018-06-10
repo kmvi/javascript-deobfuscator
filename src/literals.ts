@@ -19,6 +19,7 @@ export class StringSplit extends ProtectionBase {
         if (!this.active)
             return this.ast;
 
+        process.stdout.write('* Merging string literals...');
         this.ast = <estree.Program> replace(this.ast, {
             enter: (node, parent) => {
                 if (Utils.isBinaryExpression(node) && node.operator === '+' &&
@@ -32,6 +33,7 @@ export class StringSplit extends ProtectionBase {
                 }
             }
         });
+        process.stdout.write(' done.\n');
 
         return this.ast;
     }
@@ -53,6 +55,7 @@ export class BooleanLiterals extends ProtectionBase {
         if (!this.active)
             return this.ast;
 
+        process.stdout.write('* Replacing bool expressions...');
         this.ast = <estree.Program> replace(this.ast, {
             enter: (node, parent) => {
                 let isEmptyArray = function (e: estree.Node): e is estree.ArrayExpression {
@@ -76,6 +79,7 @@ export class BooleanLiterals extends ProtectionBase {
                 }
             }
         });
+        process.stdout.write(' done.\n');
 
         return this.ast;
     }

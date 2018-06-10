@@ -29,6 +29,7 @@ export class StringArrayProtection extends ProtectionBase {
 
     detect(): boolean {
         this.active = false;
+
         if (this.ast.body && this.ast.body.length > 0 && Utils.isVariableDeclaration(this.ast.body[0])) {
             const strArrayDef = <estree.VariableDeclaration> this.ast.body[0];
             if (strArrayDef.declarations && strArrayDef.declarations.length > 0) {
@@ -47,6 +48,12 @@ export class StringArrayProtection extends ProtectionBase {
                 }
             }
         }
+        if (this.active)
+            console.log('! String array protection detected.');
+        if (this.hasRotation)
+            console.log('! String array rotation detected.');
+        if (this.hasEncoding)
+            console.log('! String array encoding detected: %s.', this.encoding);
         return this.active;
     }
 
@@ -97,11 +104,14 @@ export class StringArrayProtection extends ProtectionBase {
         if (!this.active)
             return result;
 
+        process.stdout.write('* Rotating string array...');
         if (this.hasRotation) {
             const func = new Function(this.arrayVar, this.rotFunc);
             func.call(undefined, this.array);
         }
+        process.stdout.write(' done.\n');
 
+        process.stdout.write('* Decoding string array...');
         if (this.hasEncoding && this.astDecoder) {
             if (this.encoding === 'base64') {
                 for (let i = 0; i < this.array.length; ++i)
@@ -113,7 +123,9 @@ export class StringArrayProtection extends ProtectionBase {
             }
             this.removeDecoderCalls();
         }
+        process.stdout.write(' done.\n');
 
+        process.stdout.write('* Removing string array...');
         if (this.hasRotation && this.astRot) {
             this.ast.body.splice(this.ast.body.indexOf(this.astRot), 1);
         }
@@ -125,6 +137,7 @@ export class StringArrayProtection extends ProtectionBase {
         if (this.astArray) {
             this.ast.body.splice(this.ast.body.indexOf(this.astArray), 1);
         }
+        process.stdout.write(' done.\n');
 
         return result;
     }

@@ -115,3 +115,40 @@ export function isArrayExpression(node: estree.Node): node is estree.ArrayExpres
 export function isUnaryExpression(node: estree.Node): node is estree.UnaryExpression {
     return node.type === 'UnaryExpression';
 }
+
+export function isSwitchStatement(node: estree.Node): node is estree.SwitchStatement {
+    return node.type === 'SwitchStatement';
+}
+
+export function isContinueStatement(node: estree.Node): node is estree.ContinueStatement {
+    return node.type === 'ContinueStatement';
+}
+
+export function isWhileStatement(node: estree.Node): node is estree.WhileStatement {
+    return node.type === 'WhileStatement';
+}
+
+export function isBlockStatement(node: estree.Node): node is estree.BlockStatement {
+    return node.type === 'BlockStatement';
+}
+
+export function isBreakStatement(node: estree.Node): node is estree.BreakStatement {
+    return node.type === 'BreakStatement';
+}
+
+export function isMemberExpression(node: estree.Node): node is estree.MemberExpression {
+    return node.type === 'MemberExpression';
+}
+
+export function isUpdateExpression(node: estree.Node): node is estree.UpdateExpression {
+    return node.type === 'UpdateExpression';
+}
+
+export function isReturnStatement(node: estree.Node): node is estree.ReturnStatement {
+    return node.type === 'ReturnStatement';
+}
+
+export function isObjectExpression(node: estree.Node): node is estree.ObjectExpression {
+    return node.type === 'ObjectExpression';
+}
+

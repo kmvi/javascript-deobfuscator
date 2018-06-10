@@ -55,6 +55,7 @@ export class Deobfuscator {
             if (p.detect()) {
                 ast = p.remove();
                 code = generate(ast);
+                ast = EspreeFacade.parse(code, Deobfuscator.espreeParseOptions);
             }
         }
 

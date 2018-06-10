@@ -26,7 +26,7 @@ export class StringArrayProtection extends ProtectionBase {
     constructor(code: string, ast: estree.Program) {
         super(code, ast);
     }
-    
+
     detect(): boolean {
         this.active = false;
         if (this.ast.body && this.ast.body.length > 0 && Utils.isVariableDeclaration(this.ast.body[0])) {
@@ -40,7 +40,7 @@ export class StringArrayProtection extends ProtectionBase {
                         assert(Utils.isLiteral(e));
                         assert(typeof (<estree.Literal> e).value === 'string');
                         return (<estree.Literal> e).value as string;
-                    });                    
+                    });
                     this.active = true;
                     this.detectRotation();
                     this.detectEncoding();
@@ -80,7 +80,7 @@ export class StringArrayProtection extends ProtectionBase {
                     if (decDecl.init.params.length === 2) {
                         const decFuncCode = Utils.cutCode(this.code, decDecl.init);
                         this.encoding = /\batob\b/.test(decFuncCode)
-                            ? (/%(?:0x100|256)\D/.test(decFuncCode) ? 'rc4' : 'base64')
+                            ? (/%\s*(?:0x100|256)\D/.test(decFuncCode) ? 'rc4' : 'base64')
                             : 'none';
                         this.astDecoder = this.ast.body[index] as estree.Statement;
                         this.decFuncName = decDecl.id.name;

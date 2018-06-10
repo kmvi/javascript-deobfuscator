@@ -214,10 +214,13 @@ export class FunctionControlFlow extends ProtectionBase {
                     || Utils.isFunctionDeclaration(node))
                     && Utils.isBlockStatement(node.body) && node.body.body.length > 0)
                 {
-                    const firstStmt = node.body.body[0];
-                    if (Utils.isVariableDeclaration(firstStmt)) {
-                        const id = firstStmt.declarations[0].id;
-                        const obj = firstStmt.declarations[0].init;
+                    for (let i = 0; i < node.body.body.length; ++i) {
+                        const stmt = node.body.body[i];
+                        if (!Utils.isVariableDeclaration(stmt)) {
+                            break;
+                        }
+                        const id = stmt.declarations[0].id;
+                        const obj = stmt.declarations[0].init;
                         if (Utils.isIdentifier(id) && obj
                             && Utils.isObjectExpression(obj)
                             && obj.properties.length > 0
@@ -227,7 +230,7 @@ export class FunctionControlFlow extends ProtectionBase {
                             const result = this.processProperties(obj.properties);
                             if (Object.keys(result).length > 0) {
                                 this.data[id.name] = result;
-                                this.decl[id.name] = firstStmt;
+                                this.decl[id.name] = stmt;
                             }
                         }
                     }

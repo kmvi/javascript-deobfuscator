@@ -15,4 +15,5 @@ try {
     console.log(result);
 } catch (e) {
     console.error(e);
+    console.error(e.stack);
 }

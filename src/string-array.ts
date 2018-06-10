@@ -163,7 +163,7 @@ export class StringArrayProtection extends ProtectionBase {
     private checkDecoderCall(node: estree.Node): estree.CallExpression | null {
         if (Utils.isCallExpression(node) && Utils.isIdentifier(node.callee)) {
             if (node.callee.name === this.decFuncName) {
-                assert(node.arguments.length === 2);
+                assert(node.arguments.length === 1 || node.arguments.length === 2);
                 assert(node.arguments.every(Utils.isLiteral));
                 return node;
             }
